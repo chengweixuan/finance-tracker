@@ -10,7 +10,7 @@ const typeIcons = {
   transfer: ArrowLeftRight,
 };
 
-export function RecentTransactions({ transactions }: { transactions: TransactionWithAccount[] }) {
+export function RecentTransactions({ transactions, currency = "USD", exchangeRate = 1 }: { transactions: TransactionWithAccount[]; currency?: string; exchangeRate?: number }) {
   return (
     <Card>
       <CardHeader>
@@ -39,7 +39,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                     </div>
                   </div>
                   <span className={`text-sm font-medium ${isIncome ? "text-emerald-600" : "text-red-600"}`}>
-                    {isIncome ? "+" : "-"}{formatCurrency(Math.abs(t.amount))}
+                    {isIncome ? "+" : "-"}{formatCurrency(Math.abs(t.amount) * exchangeRate, currency)}
                   </span>
                 </div>
               );

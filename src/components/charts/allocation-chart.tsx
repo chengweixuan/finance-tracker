@@ -17,9 +17,10 @@ const COLORS = [
 
 interface AllocationChartProps {
   data: { name: string; value: number }[];
+  currency?: string;
 }
 
-export function AllocationChart({ data }: AllocationChartProps) {
+export function AllocationChart({ data, currency = "USD" }: AllocationChartProps) {
   if (data.length === 0) {
     return (
       <Card>
@@ -57,7 +58,7 @@ export function AllocationChart({ data }: AllocationChartProps) {
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+            <Tooltip formatter={(value: number) => formatCurrency(value, currency)} />
             <Legend />
           </PieChart>
         </ResponsiveContainer>

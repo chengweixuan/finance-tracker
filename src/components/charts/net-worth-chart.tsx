@@ -6,9 +6,10 @@ import { formatCurrency } from "@/lib/format";
 
 interface NetWorthChartProps {
   data: { date: string; netWorth: number }[];
+  currency?: string;
 }
 
-export function NetWorthChart({ data }: NetWorthChartProps) {
+export function NetWorthChart({ data, currency = "USD" }: NetWorthChartProps) {
   if (data.length === 0) {
     return (
       <Card>
@@ -42,10 +43,10 @@ export function NetWorthChart({ data }: NetWorthChartProps) {
             />
             <YAxis
               className="text-xs"
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value) => `${currency === "USD" ? "$" : "S$"}${(value / 1000).toFixed(0)}k`}
             />
             <Tooltip
-              formatter={(value: number) => [formatCurrency(value), "Net Worth"]}
+              formatter={(value: number) => [formatCurrency(value, currency), "Net Worth"]}
               labelFormatter={(label) =>
                 new Date(label).toLocaleDateString("en-US", {
                   year: "numeric",

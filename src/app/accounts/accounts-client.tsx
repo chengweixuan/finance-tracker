@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AccountForm } from "@/components/forms/account-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency } from "@/lib/format";
-import { Plus, Wallet, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Wallet, Pencil, Trash2, PlusCircle } from "lucide-react";
 import type { Account } from "@/lib/types";
 
 const typeColors: Record<string, string> = {
@@ -23,6 +25,10 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
+  const [addBalanceAccount, setAddBalanceAccount] = useState<Account | undefined>();
+  const [addBalanceOpen, setAddBalanceOpen] = useState(false);
+  const [addAmount, setAddAmount] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
 
   function handleDone() {
     setDialogOpen(false);
@@ -33,6 +39,23 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   async function handleDelete(id: number) {
     if (!confirm("Delete this account? All related transactions and investments will also be deleted.")) return;
     await fetch(`/api/accounts/${id}`, { method: "DELETE" });
+    router.refresh();
+  }
+
+  async function handleAddBalance(e: React.FormEvent) {
+    e.preventDefault();
+    if (!addBalanceAccount) return;
+    setAddLoading(true);
+    const newBalance = addBalanceAccount.balance + parseFloat(addAmount);
+    await fetch(`/api/accounts/${addBalanceAccount.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ balance: newBalance }),
+    });
+    setAddLoading(false);
+    setAddBalanceOpen(false);
+    setAddBalanceAccount(undefined);
+    setAddAmount("");
     router.refresh();
   }
 
@@ -76,6 +99,15 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8 text-emerald-600"
+                    title="Add to balance"
+                    onClick={() => { setAddBalanceAccount(account); setAddAmount(""); setAddBalanceOpen(true); }}
+                  >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-8 w-8"
                     onClick={() => { setEditingAccount(account); setDialogOpen(true); }}
                   >
@@ -99,6 +131,45 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
             <DialogTitle>{editingAccount ? "Edit Account" : "Add Account"}</DialogTitle>
           </DialogHeader>
           <AccountForm account={editingAccount} onSubmit={handleDone} onCancel={() => setDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addBalanceOpen} onOpenChange={(open) => { setAddBalanceOpen(open); if (!open) setAddBalanceAccount(undefined); }}>
+        <DialogContent onClose={() => { setAddBalanceOpen(false); setAddBalanceAccount(undefined); }}>
+          <DialogHeader>
+            <DialogTitle>Add to Balance — {addBalanceAccount?.name}</DialogTitle>
+          </DialogHeader>
+          {addBalanceAccount && (
+            <form onSubmit={handleAddBalance} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Current balance: <span className="font-medium text-foreground">{formatCurrency(addBalanceAccount.balance, addBalanceAccount.currency)}</span>
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="addAmount">Amount (use negative to subtract)</Label>
+                <Input
+                  id="addAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 500 or -200"
+                  value={addAmount}
+                  onChange={(e) => setAddAmount(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              {addAmount && (
+                <p className="text-sm text-muted-foreground">
+                  New balance: <span className="font-medium text-foreground">{formatCurrency(addBalanceAccount.balance + parseFloat(addAmount || "0"), addBalanceAccount.currency)}</span>
+                </p>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => { setAddBalanceOpen(false); setAddBalanceAccount(undefined); }}>Cancel</Button>
+                <Button type="submit" disabled={addLoading || !addAmount}>
+                  {addLoading ? "Saving..." : "Update Balance"}
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </>

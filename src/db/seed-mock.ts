@@ -6,8 +6,8 @@ const sqlite = new Database("sqlite.db");
 sqlite.pragma("journal_mode = WAL");
 const db = drizzle(sqlite, { schema });
 
-async function seed() {
-  console.log("Seeding database...");
+async function seedMock() {
+  console.log("Seeding MOCK data (for development only)...");
 
   // Accounts
   const [checking] = await db.insert(schema.accounts).values({ name: "Main Checking", type: "bank", balance: 5420.50, currency: "USD" }).returning();
@@ -59,11 +59,11 @@ async function seed() {
   await db.insert(schema.netWorthSnapshots).values(snapshotData);
   console.log("  Created 6 net worth snapshots");
 
-  console.log("Seed complete!");
+  console.log("Mock seed complete!");
   process.exit(0);
 }
 
-seed().catch((err) => {
-  console.error("Seed failed:", err);
+seedMock().catch((err) => {
+  console.error("Mock seed failed:", err);
   process.exit(1);
 });

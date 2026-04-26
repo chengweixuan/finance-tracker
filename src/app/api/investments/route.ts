@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { investments, accounts } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { createInvestmentSchema } from "@/lib/validators";
 import { validateBody, errorResponse } from "@/lib/api-helpers";
 
@@ -34,6 +34,32 @@ export async function POST(request: Request) {
       where: eq(accounts.id, result.data.accountId),
     });
     if (!account) return errorResponse("Account not found", 404);
+
+    const existing = await db.query.investments.findFirst({
+      where: and(
+        eq(investments.accountId, result.data.accountId),
+        eq(investments.symbol, result.data.symbol),
+      ),
+    });
+
+    if (existing) {
+      const totalShares = existing.shares + result.data.shares;
+      const newAvgCost =
+        (existing.shares * existing.avgCostPerShare + result.data.shares * result.data.avgCostPerShare) / totalShares;
+
+      const [updated] = await db
+        .update(investments)
+        .set({
+          shares: totalShares,
+          avgCostPerShare: newAvgCost,
+          name: result.data.name,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(investments.id, existing.id))
+        .returning();
+
+      return NextResponse.json(updated);
+    }
 
     const [newInvestment] = await db.insert(investments).values(result.data).returning();
     return NextResponse.json(newInvestment, { status: 201 });

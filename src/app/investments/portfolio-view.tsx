@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { InvestmentForm } from "@/components/forms/investment-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency, formatPercent } from "@/lib/format";
-import { Plus, RefreshCw, TrendingUp, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, TrendingUp, Trash2, Pencil } from "lucide-react";
 import type { Account, Investment } from "@/lib/types";
 
 type InvestmentWithAccount = Investment & { accountName: string };
@@ -30,6 +30,7 @@ export function PortfolioView({
 }) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingInvestment, setEditingInvestment] = useState<InvestmentWithAccount | undefined>();
   const [prices, setPrices] = useState<Record<string, PriceData>>({});
   const [loadingPrices, setLoadingPrices] = useState(false);
 
@@ -53,6 +54,7 @@ export function PortfolioView({
 
   function handleDone() {
     setDialogOpen(false);
+    setEditingInvestment(undefined);
     router.refresh();
   }
 
@@ -134,7 +136,7 @@ export function PortfolioView({
           <RefreshCw className={`h-4 w-4 mr-2 ${loadingPrices ? "animate-spin" : ""}`} />
           Refresh Prices
         </Button>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => { setEditingInvestment(undefined); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" /> Add Investment
         </Button>
       </div>
@@ -170,9 +172,19 @@ export function PortfolioView({
                   {formatCurrency(inv.gain)} ({formatPercent(inv.gainPercent)})
                 </td>
                 <td className="p-3 text-right">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(inv.id)}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => { setEditingInvestment(inv); setDialogOpen(true); }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(inv.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -180,12 +192,12 @@ export function PortfolioView({
         </table>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent onClose={() => setDialogOpen(false)}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingInvestment(undefined); }}>
+        <DialogContent onClose={() => { setDialogOpen(false); setEditingInvestment(undefined); }}>
           <DialogHeader>
-            <DialogTitle>Add Investment</DialogTitle>
+            <DialogTitle>{editingInvestment ? "Edit Investment" : "Add Investment"}</DialogTitle>
           </DialogHeader>
-          <InvestmentForm accounts={accounts} onSubmit={handleDone} onCancel={() => setDialogOpen(false)} />
+          <InvestmentForm accounts={accounts} investment={editingInvestment} onSubmit={handleDone} onCancel={() => { setDialogOpen(false); setEditingInvestment(undefined); }} />
         </DialogContent>
       </Dialog>
     </>

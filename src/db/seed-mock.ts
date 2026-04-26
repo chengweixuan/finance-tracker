@@ -37,9 +37,8 @@ async function seedMock() {
   // Investments
   const investmentData = [
     { accountId: brokerage.id, symbol: "VOO", name: "Vanguard S&P 500 ETF", shares: 15, avgCostPerShare: 420.50 },
-    { accountId: brokerage.id, symbol: "QQQ", name: "Invesco QQQ Trust", shares: 8, avgCostPerShare: 380.25 },
-    { accountId: brokerage.id, symbol: "AAPL", name: "Apple Inc.", shares: 20, avgCostPerShare: 175.30 },
-    { accountId: brokerage.id, symbol: "MSFT", name: "Microsoft Corp.", shares: 10, avgCostPerShare: 410.00 },
+    { accountId: brokerage.id, symbol: "CSPX.L", name: "iShares Core S&P 500 UCITS ETF", shares: 10, avgCostPerShare: 520.00 },
+    { accountId: brokerage.id, symbol: "FWRA.L", name: "Invesco FTSE All-World UCITS ETF", shares: 500, avgCostPerShare: 7.50 },
     { accountId: crypto.id, symbol: "BTC-USD", name: "Bitcoin", shares: 0.05, avgCostPerShare: 64000 },
   ];
 

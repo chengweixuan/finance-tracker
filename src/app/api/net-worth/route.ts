@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { netWorthSnapshots, accounts, investments } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoo-finance2";
+
+const yahooFinance = new YahooFinance();
 import { errorResponse } from "@/lib/api-helpers";
 
 export async function GET() {

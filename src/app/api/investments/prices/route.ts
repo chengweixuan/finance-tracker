@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoo-finance2";
+
+const yahooFinance = new YahooFinance();
 
 const cache = new Map<string, { data: Record<string, unknown>; timestamp: number }>();
 const CACHE_TTL = 60_000;

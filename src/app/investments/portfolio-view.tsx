@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InvestmentForm } from "@/components/forms/investment-form";
+import { AddSharesForm } from "@/components/forms/add-shares-form";
 import { EmptyState } from "@/components/shared/empty-state";
-import { formatCurrency, formatPercent } from "@/lib/format";
-import { Plus, RefreshCw, TrendingUp, Trash2, Pencil } from "lucide-react";
-import type { Account, Investment } from "@/lib/types";
+import { formatCurrency, formatPercent, formatDate } from "@/lib/format";
+import { Plus, RefreshCw, TrendingUp, Trash2, Pencil, PlusCircle } from "lucide-react";
+import type { Account, Investment, InvestmentHistoryWithSymbol } from "@/lib/types";
 
 type InvestmentWithAccount = Investment & { accountName: string };
 
@@ -31,8 +32,11 @@ export function PortfolioView({
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInvestment, setEditingInvestment] = useState<InvestmentWithAccount | undefined>();
+  const [addSharesInvestment, setAddSharesInvestment] = useState<InvestmentWithAccount | undefined>();
+  const [addSharesOpen, setAddSharesOpen] = useState(false);
   const [prices, setPrices] = useState<Record<string, PriceData>>({});
   const [loadingPrices, setLoadingPrices] = useState(false);
+  const [history, setHistory] = useState<InvestmentHistoryWithSymbol[]>([]);
 
   const fetchPrices = useCallback(async () => {
     if (investments.length === 0) return;
@@ -48,14 +52,26 @@ export function PortfolioView({
     setLoadingPrices(false);
   }, [investments]);
 
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch("/api/investments/history");
+      const data = await res.json();
+      setHistory(data);
+    } catch {
+      // History will be empty
+    }
+  }, []);
+
   useEffect(() => {
     fetchPrices();
-  }, [fetchPrices]);
+    fetchHistory();
+  }, [fetchPrices, fetchHistory]);
 
   function handleDone() {
     setDialogOpen(false);
     setEditingInvestment(undefined);
     router.refresh();
+    fetchHistory();
   }
 
   async function handleDelete(id: number) {
@@ -176,12 +192,22 @@ export function PortfolioView({
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8 text-emerald-600"
+                      title="Add shares"
+                      onClick={() => { setAddSharesInvestment(inv); setAddSharesOpen(true); }}
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8"
+                      title="Edit"
                       onClick={() => { setEditingInvestment(inv); setDialogOpen(true); }}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(inv.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Delete" onClick={() => handleDelete(inv.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -198,6 +224,65 @@ export function PortfolioView({
             <DialogTitle>{editingInvestment ? "Edit Investment" : "Add Investment"}</DialogTitle>
           </DialogHeader>
           <InvestmentForm accounts={accounts} investment={editingInvestment} onSubmit={handleDone} onCancel={() => { setDialogOpen(false); setEditingInvestment(undefined); }} />
+        </DialogContent>
+      </Dialog>
+
+      {history.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Investment History</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left p-3 font-medium">Date</th>
+                    <th className="text-left p-3 font-medium">Symbol</th>
+                    <th className="text-left p-3 font-medium">Type</th>
+                    <th className="text-right p-3 font-medium">Shares</th>
+                    <th className="text-right p-3 font-medium">Price</th>
+                    <th className="text-right p-3 font-medium">Total Shares After</th>
+                    <th className="text-right p-3 font-medium">Avg Cost After</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((h) => (
+                    <tr key={h.id} className="border-b hover:bg-muted/25">
+                      <td className="p-3">{formatDate(h.date)}</td>
+                      <td className="p-3">
+                        <Badge variant="outline" className="font-mono">{h.symbol}</Badge>
+                      </td>
+                      <td className="p-3">
+                        <Badge className={h.type === "buy" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"}>
+                          {h.type}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right font-mono">{h.shares.toFixed(4)}</td>
+                      <td className="p-3 text-right font-mono">{formatCurrency(h.pricePerShare)}</td>
+                      <td className="p-3 text-right font-mono">{h.totalShares.toFixed(4)}</td>
+                      <td className="p-3 text-right font-mono">{formatCurrency(h.avgCostPerShare)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={addSharesOpen} onOpenChange={(open) => { setAddSharesOpen(open); if (!open) setAddSharesInvestment(undefined); }}>
+        <DialogContent onClose={() => { setAddSharesOpen(false); setAddSharesInvestment(undefined); }}>
+          <DialogHeader>
+            <DialogTitle>Add Shares — {addSharesInvestment?.symbol}</DialogTitle>
+          </DialogHeader>
+          {addSharesInvestment && (
+            <AddSharesForm
+              investment={addSharesInvestment}
+              onSubmit={() => { setAddSharesOpen(false); setAddSharesInvestment(undefined); router.refresh(); fetchHistory(); }}
+              onCancel={() => { setAddSharesOpen(false); setAddSharesInvestment(undefined); }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

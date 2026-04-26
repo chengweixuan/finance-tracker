@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { investments, accounts } from "@/db/schema";
+import { investments, accounts, investmentHistory } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createInvestmentSchema } from "@/lib/validators";
 import { validateBody, errorResponse } from "@/lib/api-helpers";
@@ -42,6 +42,8 @@ export async function POST(request: Request) {
       ),
     });
 
+    const today = new Date().toISOString().split("T")[0];
+
     if (existing) {
       const totalShares = existing.shares + result.data.shares;
       const newAvgCost =
@@ -58,10 +60,31 @@ export async function POST(request: Request) {
         .where(eq(investments.id, existing.id))
         .returning();
 
+      await db.insert(investmentHistory).values({
+        investmentId: existing.id,
+        type: "buy",
+        shares: result.data.shares,
+        pricePerShare: result.data.avgCostPerShare,
+        totalShares,
+        avgCostPerShare: newAvgCost,
+        date: today,
+      });
+
       return NextResponse.json(updated);
     }
 
     const [newInvestment] = await db.insert(investments).values(result.data).returning();
+
+    await db.insert(investmentHistory).values({
+      investmentId: newInvestment.id,
+      type: "buy",
+      shares: result.data.shares,
+      pricePerShare: result.data.avgCostPerShare,
+      totalShares: result.data.shares,
+      avgCostPerShare: result.data.avgCostPerShare,
+      date: today,
+    });
+
     return NextResponse.json(newInvestment, { status: 201 });
   } catch {
     return errorResponse("Failed to create investment", 500);

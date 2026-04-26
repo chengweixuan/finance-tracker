@@ -33,6 +33,18 @@ export const investments = sqliteTable("investments", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const investmentHistory = sqliteTable("investment_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  investmentId: integer("investment_id").notNull().references(() => investments.id, { onDelete: "cascade" }),
+  type: text("type", { enum: ["buy", "edit"] }).notNull(),
+  shares: real("shares").notNull(),
+  pricePerShare: real("price_per_share").notNull(),
+  totalShares: real("total_shares").notNull(),
+  avgCostPerShare: real("avg_cost_per_share").notNull(),
+  date: text("date").notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const netWorthSnapshots = sqliteTable("net_worth_snapshots", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   totalAssets: real("total_assets").notNull(),
@@ -54,9 +66,17 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   }),
 }));
 
-export const investmentsRelations = relations(investments, ({ one }) => ({
+export const investmentsRelations = relations(investments, ({ one, many }) => ({
   account: one(accounts, {
     fields: [investments.accountId],
     references: [accounts.id],
+  }),
+  history: many(investmentHistory),
+}));
+
+export const investmentHistoryRelations = relations(investmentHistory, ({ one }) => ({
+  investment: one(investments, {
+    fields: [investmentHistory.investmentId],
+    references: [investments.id],
   }),
 }));

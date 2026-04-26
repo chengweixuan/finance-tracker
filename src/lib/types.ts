@@ -1,4 +1,4 @@
-import type { accounts, transactions, investments, netWorthSnapshots } from "@/db/schema";
+import type { accounts, transactions, investments, investmentHistory, netWorthSnapshots } from "@/db/schema";
 
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
@@ -25,6 +25,13 @@ export type PortfolioSummary = {
   totalGain: number;
   totalGainPercent: number;
   holdings: InvestmentWithPrice[];
+};
+
+export type InvestmentHistoryEntry = typeof investmentHistory.$inferSelect;
+
+export type InvestmentHistoryWithSymbol = InvestmentHistoryEntry & {
+  symbol: string;
+  investmentName: string;
 };
 
 export type TransactionWithAccount = Transaction & {

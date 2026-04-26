@@ -75,17 +75,18 @@ export function DashboardClient({
   const sgdToDisplay = (amount: number) => displayCurrency === "SGD" ? amount : amount / exchangeRate;
   const fmtDisplay = (amount: number) => formatCurrency(amount, displayCurrency);
 
-  const bankBalanceSGD = accounts.filter((a) => a.type === "bank").reduce((s, a) => s + a.balance, 0);
+  const cashAccounts = accounts.filter((a) => a.type === "bank" || a.type === "other");
+  const cashBalanceSGD = cashAccounts.reduce((s, a) => s + a.balance, 0);
   const investmentValueUSD = summary?.investmentValue ?? 0;
   const totalReturnsUSD = summary?.totalReturns ?? 0;
 
-  const bankInDisplay = sgdToDisplay(bankBalanceSGD);
+  const cashInDisplay = sgdToDisplay(cashBalanceSGD);
   const investmentInDisplay = usdToDisplay(investmentValueUSD);
-  const netWorth = bankInDisplay + investmentInDisplay;
+  const netWorth = cashInDisplay + investmentInDisplay;
   const totalReturns = usdToDisplay(totalReturnsUSD);
 
   const allocationData = [
-    ...accounts.filter((a) => a.type === "bank" && a.balance > 0).map((a) => ({ name: a.name, value: sgdToDisplay(a.balance) })),
+    ...cashAccounts.filter((a) => a.balance > 0).map((a) => ({ name: a.name, value: sgdToDisplay(a.balance) })),
     ...(investmentValueUSD > 0 ? [{ name: "Investments", value: investmentInDisplay }] : []),
   ];
 
@@ -118,8 +119,8 @@ export function DashboardClient({
           icon={DollarSign}
         />
         <SummaryCard
-          title="Bank Balance"
-          value={fmtDisplay(bankInDisplay)}
+          title="Cash Balance"
+          value={fmtDisplay(cashInDisplay)}
           icon={Wallet}
         />
         <SummaryCard

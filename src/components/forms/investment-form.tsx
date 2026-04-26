@@ -76,7 +76,7 @@ export function InvestmentForm({ accounts, investment, onSubmit, onCancel }: Inv
           <Input id="shares" type="number" step="0.0001" min="0" value={shares} onChange={(e) => setShares(e.target.value)} required />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="avgCost">Avg Cost / Share</Label>
+          <Label htmlFor="avgCost">Avg Cost / Share (USD)</Label>
           <Input id="avgCost" type="number" step="0.01" min="0" value={avgCostPerShare} onChange={(e) => setAvgCostPerShare(e.target.value)} required />
         </div>
       </div>

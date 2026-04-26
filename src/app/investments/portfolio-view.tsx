@@ -11,6 +11,7 @@ import { AddSharesForm } from "@/components/forms/add-shares-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency, formatPercent, formatDate } from "@/lib/format";
 import { Plus, RefreshCw, TrendingUp, Trash2, Pencil, PlusCircle } from "lucide-react";
+import { Select } from "@/components/ui/select";
 import type { Account, Investment, InvestmentHistoryWithSymbol } from "@/lib/types";
 
 type InvestmentWithAccount = Investment & { accountName: string };
@@ -37,6 +38,8 @@ export function PortfolioView({
   const [prices, setPrices] = useState<Record<string, PriceData>>({});
   const [loadingPrices, setLoadingPrices] = useState(false);
   const [history, setHistory] = useState<InvestmentHistoryWithSymbol[]>([]);
+  const [displayCurrency, setDisplayCurrency] = useState<"USD" | "SGD">("USD");
+  const [exchangeRate, setExchangeRate] = useState(1);
 
   const fetchPrices = useCallback(async () => {
     if (investments.length === 0) return;
@@ -62,10 +65,31 @@ export function PortfolioView({
     }
   }, []);
 
+  const fetchExchangeRate = useCallback(async () => {
+    if (displayCurrency === "USD") {
+      setExchangeRate(1);
+      return;
+    }
+    try {
+      const res = await fetch("/api/investments/prices?symbols=SGDUSD=X");
+      const data = await res.json();
+      const rate = data["SGDUSD=X"]?.price;
+      if (rate && rate > 0) {
+        setExchangeRate(1 / rate);
+      }
+    } catch {
+      // Fallback rate
+    }
+  }, [displayCurrency]);
+
   useEffect(() => {
     fetchPrices();
     fetchHistory();
   }, [fetchPrices, fetchHistory]);
+
+  useEffect(() => {
+    fetchExchangeRate();
+  }, [fetchExchangeRate]);
 
   function handleDone() {
     setDialogOpen(false);
@@ -79,6 +103,9 @@ export function PortfolioView({
     await fetch(`/api/investments/${id}`, { method: "DELETE" });
     router.refresh();
   }
+
+  const fx = (amount: number) => amount * exchangeRate;
+  const fxCurrency = (amount: number) => formatCurrency(fx(amount), displayCurrency);
 
   const enriched = investments.map((inv) => {
     const price = prices[inv.symbol]?.price ?? 0;
@@ -124,7 +151,7 @@ export function PortfolioView({
             <CardTitle className="text-sm font-medium text-muted-foreground">Portfolio Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
+            <div className="text-2xl font-bold">{fxCurrency(totalValue)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -132,7 +159,7 @@ export function PortfolioView({
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Cost Basis</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalCost)}</div>
+            <div className="text-2xl font-bold">{fxCurrency(totalCost)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -141,17 +168,27 @@ export function PortfolioView({
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalGain >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-              {formatCurrency(totalGain)} ({formatPercent(totalGainPercent)})
+              {fxCurrency(totalGain)} ({formatPercent(totalGainPercent)})
             </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex justify-between items-center">
-        <Button variant="outline" size="sm" onClick={fetchPrices} disabled={loadingPrices}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loadingPrices ? "animate-spin" : ""}`} />
-          Refresh Prices
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchPrices} disabled={loadingPrices}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loadingPrices ? "animate-spin" : ""}`} />
+            Refresh Prices
+          </Button>
+          <Select
+            value={displayCurrency}
+            onChange={(e) => setDisplayCurrency(e.target.value as "USD" | "SGD")}
+            className="w-24 h-8 text-xs"
+          >
+            <option value="USD">USD</option>
+            <option value="SGD">SGD</option>
+          </Select>
+        </div>
         <Button onClick={() => { setEditingInvestment(undefined); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" /> Add Investment
         </Button>
@@ -179,13 +216,13 @@ export function PortfolioView({
                 </td>
                 <td className="p-3">{inv.name}</td>
                 <td className="p-3 text-right font-mono">{inv.shares.toFixed(4)}</td>
-                <td className="p-3 text-right font-mono">{formatCurrency(inv.avgCostPerShare)}</td>
+                <td className="p-3 text-right font-mono">{fxCurrency(inv.avgCostPerShare)}</td>
                 <td className="p-3 text-right font-mono">
-                  {inv.currentPrice > 0 ? formatCurrency(inv.currentPrice) : "..."}
+                  {inv.currentPrice > 0 ? fxCurrency(inv.currentPrice) : "..."}
                 </td>
-                <td className="p-3 text-right font-mono">{formatCurrency(inv.marketValue)}</td>
+                <td className="p-3 text-right font-mono">{fxCurrency(inv.marketValue)}</td>
                 <td className={`p-3 text-right font-mono ${inv.gain >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                  {formatCurrency(inv.gain)} ({formatPercent(inv.gainPercent)})
+                  {fxCurrency(inv.gain)} ({formatPercent(inv.gainPercent)})
                 </td>
                 <td className="p-3 text-right">
                   <div className="flex justify-end gap-1">

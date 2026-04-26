@@ -10,10 +10,10 @@ async function seedMock() {
   console.log("Seeding MOCK data (for development only)...");
 
   // Accounts
-  const [checking] = await db.insert(schema.accounts).values({ name: "Main Checking", type: "bank", balance: 5420.50, currency: "USD" }).returning();
-  const [savings] = await db.insert(schema.accounts).values({ name: "High-Yield Savings", type: "bank", balance: 25000, currency: "USD" }).returning();
-  const [brokerage] = await db.insert(schema.accounts).values({ name: "Brokerage", type: "brokerage", balance: 0, currency: "USD" }).returning();
-  const [crypto] = await db.insert(schema.accounts).values({ name: "Crypto Wallet", type: "crypto", balance: 3200, currency: "USD" }).returning();
+  const [checking] = await db.insert(schema.accounts).values({ name: "Main Checking", type: "bank", balance: 5420.50, currency: "SGD" }).returning();
+  const [savings] = await db.insert(schema.accounts).values({ name: "High-Yield Savings", type: "bank", balance: 25000, currency: "SGD" }).returning();
+  const [brokerage] = await db.insert(schema.accounts).values({ name: "Brokerage", type: "brokerage", balance: 0, currency: "SGD" }).returning();
+  const [crypto] = await db.insert(schema.accounts).values({ name: "Crypto Wallet", type: "crypto", balance: 3200, currency: "SGD" }).returning();
 
   console.log("  Created 4 accounts");
 

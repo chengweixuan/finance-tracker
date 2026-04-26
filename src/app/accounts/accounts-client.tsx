@@ -87,8 +87,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                 </div>
               </div>
               <h3 className="font-semibold text-lg">{account.name}</h3>
-              <p className="text-2xl font-bold mt-1">{formatCurrency(account.balance)}</p>
-              <p className="text-xs text-muted-foreground mt-1">{account.currency}</p>
+              <p className="text-2xl font-bold mt-1">{formatCurrency(account.balance, account.currency)}</p>
             </CardContent>
           </Card>
         ))}

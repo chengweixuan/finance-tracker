@@ -17,7 +17,7 @@ export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
   const [name, setName] = useState(account?.name ?? "");
   const [type, setType] = useState(account?.type ?? "bank");
   const [balance, setBalance] = useState(account?.balance?.toString() ?? "0");
-  const [currency, setCurrency] = useState(account?.currency ?? "USD");
+  const [currency, setCurrency] = useState(account?.currency ?? "SGD");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -58,7 +58,10 @@ export function AccountForm({ account, onSubmit, onCancel }: AccountFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="currency">Currency</Label>
-        <Input id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+        <Select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+          <option value="USD">USD</option>
+          <option value="SGD">SGD</option>
+        </Select>
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>

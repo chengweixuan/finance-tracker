@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Wallet, Pencil, Trash2, PlusCircle } from "lucide-react";
-import type { Account } from "@/lib/types";
+import type { Account, Investment } from "@/lib/types";
 
 const typeColors: Record<string, string> = {
   bank: "bg-blue-100 text-blue-800",
@@ -21,7 +21,11 @@ const typeColors: Record<string, string> = {
   other: "bg-gray-100 text-gray-800",
 };
 
-export function AccountsClient({ accounts }: { accounts: Account[] }) {
+interface PriceData {
+  price: number;
+}
+
+export function AccountsClient({ accounts, investments }: { accounts: Account[]; investments: Investment[] }) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
@@ -29,6 +33,32 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   const [addBalanceOpen, setAddBalanceOpen] = useState(false);
   const [addAmount, setAddAmount] = useState("");
   const [addLoading, setAddLoading] = useState(false);
+  const [prices, setPrices] = useState<Record<string, PriceData>>({});
+
+  const fetchPrices = useCallback(async () => {
+    if (investments.length === 0) return;
+    const symbols = [...new Set(investments.map((i) => i.symbol))].join(",");
+    try {
+      const res = await fetch(`/api/investments/prices?symbols=${symbols}`);
+      const data = await res.json();
+      setPrices(data);
+    } catch {
+      // Prices will fall back to cost basis
+    }
+  }, [investments]);
+
+  useEffect(() => {
+    fetchPrices();
+  }, [fetchPrices]);
+
+  function getPortfolioValue(accountId: number) {
+    const holdings = investments.filter((i) => i.accountId === accountId);
+    if (holdings.length === 0) return 0;
+    return holdings.reduce((sum, inv) => {
+      const price = prices[inv.symbol]?.price ?? inv.avgCostPerShare;
+      return sum + inv.shares * price;
+    }, 0);
+  }
 
   function handleDone() {
     setDialogOpen(false);
@@ -36,9 +66,10 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
     router.refresh();
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this account? All related transactions and investments will also be deleted.")) return;
-    await fetch(`/api/accounts/${id}`, { method: "DELETE" });
+  async function handleDelete(account: Account) {
+    const msg = `Are you sure you want to delete "${account.name}"?\n\nThis will permanently delete ALL transactions and investments linked to this account. This cannot be undone.`;
+    if (!confirm(msg)) return;
+    await fetch(`/api/accounts/${account.id}`, { method: "DELETE" });
     router.refresh();
   }
 
@@ -113,13 +144,24 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(account.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(account)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
               <h3 className="font-semibold text-lg">{account.name}</h3>
               <p className="text-2xl font-bold mt-1">{formatCurrency(account.balance, account.currency)}</p>
+              {(account.type === "brokerage" || account.type === "crypto") && (() => {
+                const portfolioValue = getPortfolioValue(account.id);
+                const holdingCount = investments.filter((i) => i.accountId === account.id).length;
+                if (holdingCount === 0) return null;
+                return (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Portfolio: <span className="font-medium text-foreground">{formatCurrency(portfolioValue, "USD")}</span>
+                    <span className="ml-1">({holdingCount} holding{holdingCount !== 1 ? "s" : ""})</span>
+                  </p>
+                );
+              })()}
             </CardContent>
           </Card>
         ))}

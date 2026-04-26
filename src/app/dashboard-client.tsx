@@ -70,20 +70,26 @@ export function DashboardClient({
     fetchExchangeRate();
   }, [fetchExchangeRate]);
 
-  const fx = (amount: number) => amount * exchangeRate;
-  const fxCurrency = (amount: number) => formatCurrency(fx(amount), displayCurrency);
+  // Account balances are in SGD, investment values are in USD
+  const usdToDisplay = (amount: number) => displayCurrency === "USD" ? amount : amount * exchangeRate;
+  const sgdToDisplay = (amount: number) => displayCurrency === "SGD" ? amount : amount / exchangeRate;
+  const fmtDisplay = (amount: number) => formatCurrency(amount, displayCurrency);
 
-  const bankBalance = accounts.filter((a) => a.type === "bank").reduce((s, a) => s + a.balance, 0);
-  const netWorth = summary?.netWorth ?? accounts.reduce((s, a) => s + a.balance, 0);
-  const investmentValue = summary?.investmentValue ?? 0;
-  const totalReturns = summary?.totalReturns ?? 0;
+  const bankBalanceSGD = accounts.filter((a) => a.type === "bank").reduce((s, a) => s + a.balance, 0);
+  const investmentValueUSD = summary?.investmentValue ?? 0;
+  const totalReturnsUSD = summary?.totalReturns ?? 0;
+
+  const bankInDisplay = sgdToDisplay(bankBalanceSGD);
+  const investmentInDisplay = usdToDisplay(investmentValueUSD);
+  const netWorth = bankInDisplay + investmentInDisplay;
+  const totalReturns = usdToDisplay(totalReturnsUSD);
 
   const allocationData = [
-    ...accounts.filter((a) => a.type === "bank" && a.balance > 0).map((a) => ({ name: a.name, value: fx(a.balance) })),
-    ...(investmentValue > 0 ? [{ name: "Investments", value: fx(investmentValue) }] : []),
+    ...accounts.filter((a) => a.type === "bank" && a.balance > 0).map((a) => ({ name: a.name, value: sgdToDisplay(a.balance) })),
+    ...(investmentValueUSD > 0 ? [{ name: "Investments", value: investmentInDisplay }] : []),
   ];
 
-  const chartData = snapshots.map((s) => ({ date: s.date, netWorth: fx(s.netWorth) }));
+  const chartData = snapshots.map((s) => ({ date: s.date, netWorth: sgdToDisplay(s.netWorth) }));
 
   return (
     <>
@@ -108,26 +114,26 @@ export function DashboardClient({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           title="Net Worth"
-          value={fxCurrency(netWorth)}
+          value={fmtDisplay(netWorth)}
           icon={DollarSign}
         />
         <SummaryCard
           title="Bank Balance"
-          value={fxCurrency(bankBalance)}
+          value={fmtDisplay(bankInDisplay)}
           icon={Wallet}
         />
         <SummaryCard
           title="Investment Value"
-          value={fxCurrency(investmentValue)}
+          value={fmtDisplay(investmentInDisplay)}
           icon={TrendingUp}
         />
         <SummaryCard
           title="Total Returns"
-          value={fxCurrency(totalReturns)}
+          value={fmtDisplay(totalReturns)}
           icon={BarChart3}
           trend={
             summary
-              ? `${summary.unrealizedGain >= 0 ? "+" : ""}${fxCurrency(summary.unrealizedGain)} unrealized, ${fxCurrency(summary.dividendIncome)} dividends`
+              ? `${summary.unrealizedGain >= 0 ? "+" : ""}${fmtDisplay(usdToDisplay(summary.unrealizedGain))} unrealized, ${fmtDisplay(usdToDisplay(summary.dividendIncome))} dividends`
               : undefined
           }
           trendUp={totalReturns >= 0}
@@ -143,7 +149,7 @@ export function DashboardClient({
         </div>
       </div>
 
-      <RecentTransactions transactions={transactions} currency={displayCurrency} exchangeRate={exchangeRate} />
+      <RecentTransactions transactions={transactions} currency={displayCurrency} exchangeRate={displayCurrency === "SGD" ? 1 : 1 / exchangeRate} />
     </>
   );
 }

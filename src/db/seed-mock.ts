@@ -10,8 +10,8 @@ async function seedMock() {
   console.log("Seeding MOCK data (for development only)...");
 
   // Accounts
-  const [checking] = await db.insert(schema.accounts).values({ name: "Main Checking", type: "bank", balance: 5420.50, currency: "SGD" }).returning();
-  const [savings] = await db.insert(schema.accounts).values({ name: "High-Yield Savings", type: "bank", balance: 25000, currency: "SGD" }).returning();
+  const [main] = await db.insert(schema.accounts).values({ name: "Main Account", type: "bank", balance: 150000, currency: "SGD" }).returning();
+  const [stash] = await db.insert(schema.accounts).values({ name: "Stash Account", type: "bank", balance: 10000, currency: "SGD" }).returning();
   const [brokerage] = await db.insert(schema.accounts).values({ name: "Brokerage", type: "brokerage", balance: 0, currency: "SGD" }).returning();
   const [crypto] = await db.insert(schema.accounts).values({ name: "Crypto Wallet", type: "crypto", balance: 3200, currency: "SGD" }).returning();
 
@@ -19,16 +19,16 @@ async function seedMock() {
 
   // Transactions
   const txns = [
-    { accountId: checking.id, amount: 5500, type: "income" as const, category: "Salary", description: "Monthly salary", date: "2026-04-01" },
-    { accountId: checking.id, amount: 1800, type: "expense" as const, category: "Housing", description: "Rent payment", date: "2026-04-01" },
-    { accountId: checking.id, amount: 320, type: "expense" as const, category: "Food", description: "Groceries", date: "2026-04-05" },
-    { accountId: checking.id, amount: 85, type: "expense" as const, category: "Utilities", description: "Electric bill", date: "2026-04-07" },
-    { accountId: checking.id, amount: 150, type: "expense" as const, category: "Transport", description: "Gas and parking", date: "2026-04-10" },
-    { accountId: checking.id, amount: 200, type: "expense" as const, category: "Entertainment", description: "Concert tickets", date: "2026-04-12" },
-    { accountId: savings.id, amount: 45.50, type: "income" as const, category: "Interest", description: "Monthly interest", date: "2026-04-15" },
-    { accountId: checking.id, amount: 75, type: "expense" as const, category: "Shopping", description: "New running shoes", date: "2026-04-18" },
+    { accountId: main.id, amount: 5500, type: "income" as const, category: "Salary", description: "Monthly salary", date: "2026-04-01" },
+    { accountId: main.id, amount: 1800, type: "expense" as const, category: "Housing", description: "Rent payment", date: "2026-04-01" },
+    { accountId: main.id, amount: 320, type: "expense" as const, category: "Food", description: "Groceries", date: "2026-04-05" },
+    { accountId: main.id, amount: 85, type: "expense" as const, category: "Utilities", description: "Electric bill", date: "2026-04-07" },
+    { accountId: main.id, amount: 150, type: "expense" as const, category: "Transport", description: "Gas and parking", date: "2026-04-10" },
+    { accountId: main.id, amount: 200, type: "expense" as const, category: "Entertainment", description: "Concert tickets", date: "2026-04-12" },
+    { accountId: stash.id, amount: 45.50, type: "income" as const, category: "Interest", description: "Monthly interest", date: "2026-04-15" },
+    { accountId: main.id, amount: 75, type: "expense" as const, category: "Shopping", description: "New running shoes", date: "2026-04-18" },
     { accountId: brokerage.id, amount: 125, type: "income" as const, category: "Dividends", description: "VOO dividend", date: "2026-04-20" },
-    { accountId: checking.id, amount: 42, type: "expense" as const, category: "Food", description: "Restaurant dinner", date: "2026-04-22" },
+    { accountId: main.id, amount: 42, type: "expense" as const, category: "Food", description: "Restaurant dinner", date: "2026-04-22" },
   ];
 
   await db.insert(schema.transactions).values(txns);
@@ -43,7 +43,7 @@ async function seedMock() {
   ];
 
   await db.insert(schema.investments).values(investmentData);
-  console.log("  Created 5 investments");
+  console.log("  Created 4 investments");
 
   // Net worth snapshots (past 6 months)
   const snapshotData = [

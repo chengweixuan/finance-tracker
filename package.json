@@ -13,7 +13,9 @@
     "db:studio": "drizzle-kit studio",
     "db:reset": "npx tsx src/db/reset.ts",
     "db:mock": "npx tsx src/db/seed-mock.ts",
-    "db:fresh": "npm run db:reset && npm run db:mock"
+    "db:fresh": "npm run db:reset && npm run db:mock",
+    "db:backup": "cp sqlite.db sqlite.db.backup && echo 'Backed up to sqlite.db.backup'",
+    "db:restore": "test -f sqlite.db.backup && cp sqlite.db.backup sqlite.db && echo 'Restored from sqlite.db.backup' || echo 'No backup found'"
   },
   "keywords": [],
   "author": "",

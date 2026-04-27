@@ -58,6 +58,17 @@ async function seedMock() {
   await db.insert(schema.netWorthSnapshots).values(snapshotData);
   console.log("  Created 6 net worth snapshots");
 
+  // Budget
+  await db.insert(schema.budgetConfig).values({ monthlySalary: 8000 });
+  await db.insert(schema.budgetAllocations).values([
+    { category: "Investments", amount: 2000 },
+    { category: "Insurance", amount: 500 },
+    { category: "Tax", amount: 1200 },
+    { category: "Rent", amount: 1800 },
+    { category: "Savings", amount: 1000 },
+  ]);
+  console.log("  Created budget with 5 allocations");
+
   sqlite.pragma("wal_checkpoint(TRUNCATE)");
   console.log("Mock seed complete!");
   process.exit(0);

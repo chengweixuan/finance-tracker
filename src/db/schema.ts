@@ -54,6 +54,20 @@ export const netWorthSnapshots = sqliteTable("net_worth_snapshots", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const budgetConfig = sqliteTable("budget_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  monthlySalary: real("monthly_salary").notNull().default(0),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const budgetAllocations = sqliteTable("budget_allocations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  category: text("category").notNull(),
+  amount: real("amount").notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),
   investments: many(investments),

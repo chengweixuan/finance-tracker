@@ -27,3 +27,11 @@ export const createInvestmentSchema = z.object({
 });
 
 export const updateInvestmentSchema = createInvestmentSchema.partial();
+
+export const budgetSchema = z.object({
+  salary: z.number().min(0),
+  allocations: z.array(z.object({
+    category: z.string().min(1, "Category is required"),
+    amount: z.number().min(0, "Amount must be positive"),
+  })),
+});

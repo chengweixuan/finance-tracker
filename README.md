@@ -39,17 +39,17 @@ Open http://localhost:3002.
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server (port 3002) |
-| `npm run build` | Production build |
-| `npm run db:push` | Push schema changes to SQLite |
-| `npm run db:reset` | Wipe all data (keeps schema intact) |
-| `npm run db:mock` | Seed mock data for development |
-| `npm run db:fresh` | Reset + seed mock data in one step |
-| `npm run db:backup` | Snapshot current DB to `sqlite.db.backup` |
-| `npm run db:restore` | Restore DB from backup |
-| `npm run db:studio` | Open Drizzle Studio (DB browser) |
+| Command              | Description                               |
+| -------------------- | ----------------------------------------- |
+| `npm run dev`        | Start dev server (port 3002)              |
+| `npm run build`      | Production build                          |
+| `npm run db:push`    | Push schema changes to SQLite             |
+| `npm run db:reset`   | Wipe all data (keeps schema intact)       |
+| `npm run db:mock`    | Seed mock data for development            |
+| `npm run db:fresh`   | Reset + seed mock data in one step        |
+| `npm run db:backup`  | Snapshot current DB to `sqlite.db.backup` |
+| `npm run db:restore` | Restore DB from backup                    |
+| `npm run db:studio`  | Open Drizzle Studio (DB browser)          |
 
 ## Database
 
@@ -58,14 +58,14 @@ The database is a single SQLite file (`sqlite.db`) at the project root in WAL mo
 **Typical workflows:**
 
 ```bash
-# Start fresh with mock data
-npm run db:fresh
+# Clear all data
+npm run db:reset
 
 # Save your real data before experimenting
 npm run db:backup
 
-# Switch to mock data
-npm run db:fresh
+# Start with mock data
+npm run db:mock
 
 # Restore your real data
 npm run db:restore

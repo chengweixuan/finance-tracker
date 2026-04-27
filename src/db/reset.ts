@@ -4,20 +4,22 @@ import * as schema from "./schema";
 import { sql } from "drizzle-orm";
 
 const sqlite = new Database("sqlite.db");
+sqlite.pragma("journal_mode = WAL");
 const db = drizzle(sqlite, { schema });
 
 async function reset() {
   console.log("Resetting database...");
 
+  await db.run(sql`DELETE FROM investment_history`);
   await db.run(sql`DELETE FROM net_worth_snapshots`);
   await db.run(sql`DELETE FROM transactions`);
   await db.run(sql`DELETE FROM investments`);
   await db.run(sql`DELETE FROM accounts`);
-
-  // Reset autoincrement counters
   await db.run(sql`DELETE FROM sqlite_sequence`);
 
-  console.log("All data cleared. Schema preserved.");
+  sqlite.pragma("wal_checkpoint(TRUNCATE)");
+
+  console.log("All data cleared.");
   process.exit(0);
 }
 

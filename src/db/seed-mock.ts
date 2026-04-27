@@ -58,6 +58,7 @@ async function seedMock() {
   await db.insert(schema.netWorthSnapshots).values(snapshotData);
   console.log("  Created 6 net worth snapshots");
 
+  sqlite.pragma("wal_checkpoint(TRUNCATE)");
   console.log("Mock seed complete!");
   process.exit(0);
 }

@@ -12,10 +12,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:reset": "npx tsx src/db/reset.ts",
-    "db:mock": "npx tsx src/db/seed-mock.ts",
-    "db:fresh": "npm run db:reset && npm run db:mock",
+    "db:mock": "npm run db:reset && npx tsx src/db/seed-mock.ts",
     "db:backup": "sqlite3 sqlite.db 'PRAGMA wal_checkpoint(TRUNCATE);' && cp sqlite.db sqlite.db.backup && echo 'Backed up to sqlite.db.backup'",
-    "db:restore": "test -f sqlite.db.backup && cp sqlite.db.backup sqlite.db && rm -f sqlite.db-wal sqlite.db-shm && echo 'Restored from sqlite.db.backup' || echo 'No backup found'"
+    "db:restore": "npx tsx src/db/restore.ts"
   },
   "keywords": [],
   "author": "",

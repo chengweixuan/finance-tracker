@@ -38,3 +38,5 @@ sqlite.db
 sqlite.db-wal
 sqlite.db-shm
 sqlite.db.backup
+sqlite.db.backup-wal
+sqlite.db.backup-shm

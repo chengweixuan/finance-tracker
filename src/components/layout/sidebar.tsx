@@ -9,8 +9,8 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/accounts", label: "Accounts", icon: Wallet },
   { href: "/investments", label: "Investments", icon: TrendingUp },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/budget", label: "Budget", icon: PieChart },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
 ];
 
 export function Sidebar() {

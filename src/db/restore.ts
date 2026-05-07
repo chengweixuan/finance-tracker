@@ -17,10 +17,16 @@ const db = drizzle(sqlite, { schema });
 
 const backupSqlite = new Database(BACKUP_PATH, { readonly: true });
 
+function backupHasTable(name: string): boolean {
+  const row = backupSqlite.prepare("SELECT count(*) as c FROM sqlite_master WHERE type='table' AND name=?").get(name) as { c: number };
+  return row.c > 0;
+}
+
 function restore() {
   console.log("Restoring from backup...");
 
-  // Clear current data
+  sqlite.exec("DELETE FROM budget_allocations");
+  sqlite.exec("DELETE FROM budget_config");
   sqlite.exec("DELETE FROM investment_history");
   sqlite.exec("DELETE FROM net_worth_snapshots");
   sqlite.exec("DELETE FROM transactions");
@@ -28,10 +34,22 @@ function restore() {
   sqlite.exec("DELETE FROM accounts");
   sqlite.exec("DELETE FROM sqlite_sequence");
 
-  // Copy each table from backup
-  const tables = ["accounts", "transactions", "investments", "investment_history", "net_worth_snapshots"];
+  const tables = [
+    "accounts",
+    "transactions",
+    "investments",
+    "investment_history",
+    "net_worth_snapshots",
+    "budget_config",
+    "budget_allocations",
+  ];
 
   for (const table of tables) {
+    if (!backupHasTable(table)) {
+      console.log(`  Skipped ${table} (not in backup)`);
+      continue;
+    }
+
     const rows = backupSqlite.prepare(`SELECT * FROM ${table}`).all();
     if (rows.length === 0) continue;
 

@@ -41,11 +41,18 @@ export function BudgetClient({
   );
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [includeCpf, setIncludeCpf] = useState(false);
+  const [chartIncludeCpf, setChartIncludeCpf] = useState(false);
 
-  const salaryNum = parseFloat(salary) || 0;
+  const CPF_RATE = 0.20;
+  const CPF_OW_CEILING = 8000;
+
+  const grossSalary = parseFloat(salary) || 0;
+  const cpfContribution = Math.min(grossSalary, CPF_OW_CEILING) * CPF_RATE;
+  const takeHome = grossSalary - cpfContribution;
   const totalAllocated = allocations.reduce((s, a) => s + (a.amount || 0), 0);
-  const remaining = salaryNum - totalAllocated;
-  const remainingPercent = salaryNum > 0 ? (remaining / salaryNum) * 100 : 0;
+  const totalWithCpf = totalAllocated + cpfContribution;
+  const remaining = includeCpf ? grossSalary - totalWithCpf : takeHome - totalAllocated;
 
   function updateAllocation(index: number, field: "category" | "amount", value: string) {
     const updated = [...allocations];
@@ -74,7 +81,7 @@ export function BudgetClient({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        salary: salaryNum,
+        salary: grossSalary,
         allocations: allocations
           .filter((a) => a.category.trim() !== "")
           .map((a) => ({ category: a.category, amount: a.amount })),
@@ -85,11 +92,14 @@ export function BudgetClient({
     router.refresh();
   }
 
+  const chartBase = allocations.filter((a) => a.category.trim() && a.amount > 0);
+  const chartRemaining = chartIncludeCpf
+    ? grossSalary - totalAllocated - cpfContribution
+    : (grossSalary - cpfContribution) - totalAllocated;
   const chartData = [
-    ...allocations
-      .filter((a) => a.category.trim() && a.amount > 0)
-      .map((a) => ({ name: a.category, value: a.amount })),
-    ...(remaining > 0 ? [{ name: "Remaining", value: remaining }] : []),
+    ...(chartIncludeCpf && cpfContribution > 0 ? [{ name: "CPF", value: cpfContribution }] : []),
+    ...chartBase.map((a) => ({ name: a.category, value: a.amount })),
+    ...(chartRemaining > 0 ? [{ name: "Remaining", value: chartRemaining }] : []),
   ];
 
   return (
@@ -99,17 +109,39 @@ export function BudgetClient({
           <CardTitle>Monthly Salary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-w-xs">
-            <Label htmlFor="salary">Gross Monthly Income (SGD)</Label>
-            <Input
-              id="salary"
-              type="number"
-              step="0.01"
-              min="0"
-              value={salary}
-              onChange={(e) => { setSalary(e.target.value); setDirty(true); }}
-              className="mt-1 text-lg font-mono"
-            />
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="max-w-xs">
+              <Label htmlFor="salary">Gross Monthly Income (SGD)</Label>
+              <Input
+                id="salary"
+                type="number"
+                step="0.01"
+                min="0"
+                value={salary}
+                onChange={(e) => { setSalary(e.target.value); setDirty(true); }}
+                className="mt-1 text-lg font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-2 cursor-pointer">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={includeCpf}
+                  onClick={() => setIncludeCpf(!includeCpf)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${includeCpf ? "bg-primary" : "bg-muted"}`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${includeCpf ? "translate-x-4" : "translate-x-0"}`} />
+                </button>
+                Include CPF
+              </Label>
+              {grossSalary > 0 && (
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <p>CPF (20% employee): {formatCurrency(cpfContribution, "SGD")}</p>
+                  <p>Take-home: {formatCurrency(grossSalary - cpfContribution, "SGD")}</p>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -135,8 +167,19 @@ export function BudgetClient({
                   </tr>
                 </thead>
                 <tbody>
+                  {includeCpf && (
+                    <tr className="border-b bg-blue-50/50">
+                      <td className="p-3 text-sm font-medium text-blue-800">CPF (Employee 20%)</td>
+                      <td className="p-3 text-right font-mono text-sm text-blue-800">{formatCurrency(cpfContribution, "SGD")}</td>
+                      <td className="p-3 text-right font-mono text-sm text-blue-600">
+                        {grossSalary > 0 ? formatPercent((cpfContribution / grossSalary) * 100) : "—"}
+                      </td>
+                      <td></td>
+                    </tr>
+                  )}
                   {allocations.map((alloc, i) => {
-                    const pct = salaryNum > 0 ? (alloc.amount / salaryNum) * 100 : 0;
+                    const base = includeCpf ? grossSalary : takeHome;
+                    const pct = base > 0 ? (alloc.amount / base) * 100 : 0;
                     return (
                       <tr key={i} className="border-b">
                         <td className="p-2">
@@ -179,9 +222,13 @@ export function BudgetClient({
                   </tr>
                   <tr className="bg-muted/30 font-medium">
                     <td className="p-3">Total Allocated</td>
-                    <td className="p-3 text-right font-mono">{formatCurrency(totalAllocated, "SGD")}</td>
+                    <td className="p-3 text-right font-mono">{formatCurrency(includeCpf ? totalWithCpf : totalAllocated, "SGD")}</td>
                     <td className="p-3 text-right font-mono text-sm">
-                      {salaryNum > 0 ? formatPercent((totalAllocated / salaryNum) * 100) : "—"}
+                      {(() => {
+                        const base = includeCpf ? grossSalary : takeHome;
+                        const total = includeCpf ? totalWithCpf : totalAllocated;
+                        return base > 0 ? formatPercent((total / base) * 100) : "—";
+                      })()}
                     </td>
                     <td></td>
                   </tr>
@@ -189,7 +236,7 @@ export function BudgetClient({
                     <td className="p-3">Remaining</td>
                     <td className="p-3 text-right font-mono">{formatCurrency(remaining, "SGD")}</td>
                     <td className="p-3 text-right font-mono text-sm">
-                      {salaryNum > 0 ? formatPercent(remainingPercent) : "—"}
+                      {takeHome > 0 ? formatPercent((remaining / (includeCpf ? grossSalary : takeHome)) * 100) : "—"}
                     </td>
                     <td></td>
                   </tr>
@@ -200,8 +247,20 @@ export function BudgetClient({
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Breakdown</CardTitle>
+            <Label className="flex items-center gap-2 cursor-pointer text-sm font-normal">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={chartIncludeCpf}
+                onClick={() => setChartIncludeCpf(!chartIncludeCpf)}
+                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${chartIncludeCpf ? "bg-primary" : "bg-muted"}`}
+              >
+                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${chartIncludeCpf ? "translate-x-4" : "translate-x-0"}`} />
+              </button>
+              Include CPF
+            </Label>
           </CardHeader>
           <CardContent>
             {chartData.length === 0 ? (

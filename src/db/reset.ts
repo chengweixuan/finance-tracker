@@ -10,6 +10,7 @@ const db = drizzle(sqlite, { schema });
 async function reset() {
   console.log("Resetting database...");
 
+  await db.run(sql`DELETE FROM tax_config`);
   await db.run(sql`DELETE FROM budget_allocations`);
   await db.run(sql`DELETE FROM budget_config`);
   await db.run(sql`DELETE FROM investment_history`);

@@ -25,6 +25,7 @@ function backupHasTable(name: string): boolean {
 function restore() {
   console.log("Restoring from backup...");
 
+  sqlite.exec("DELETE FROM tax_config");
   sqlite.exec("DELETE FROM budget_allocations");
   sqlite.exec("DELETE FROM budget_config");
   sqlite.exec("DELETE FROM investment_history");
@@ -42,6 +43,7 @@ function restore() {
     "net_worth_snapshots",
     "budget_config",
     "budget_allocations",
+    "tax_config",
   ];
 
   for (const table of tables) {

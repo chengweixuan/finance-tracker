@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Wallet, TrendingUp, ArrowLeftRight, PieChart } from "lucide-react";
+import { Menu, X, LayoutDashboard, Wallet, TrendingUp, ArrowLeftRight, PieChart, Calculator } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/accounts", label: "Accounts", icon: Wallet },
   { href: "/investments", label: "Investments", icon: TrendingUp },
   { href: "/budget", label: "Budget", icon: PieChart },
+  { href: "/tax", label: "Tax", icon: Calculator },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
 ];
 

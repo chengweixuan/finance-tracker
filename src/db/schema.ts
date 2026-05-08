@@ -68,6 +68,15 @@ export const budgetAllocations = sqliteTable("budget_allocations", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const taxConfig = sqliteTable("tax_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  income: real("income").notNull().default(0),
+  monthlyMode: integer("monthly_mode").notNull().default(0),
+  reliefs: text("reliefs").notNull().default("[]"),
+  customReliefs: text("custom_reliefs").notNull().default("[]"),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),
   investments: many(investments),
